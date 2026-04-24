@@ -246,6 +246,14 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Planner Layout */
+.planner-layout {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
 /* Task List */
 .task-list {
   display: flex;
@@ -553,6 +561,81 @@ body {
 .big-stat p {
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* Timeline */
+.timeline-section {
+  padding: 1.5rem;
+  min-height: 400px;
+}
+
+.timeline {
+  margin-top: 1.5rem;
+  position: relative;
+  padding-left: 1rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--glass-border);
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.timeline-item .time {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.timeline-item .dot {
+  width: 12px;
+  height: 12px;
+  background: var(--glass-border);
+  border-radius: 50%;
+  position: absolute;
+  left: -16px;
+  top: 4px;
+  border: 2px solid var(--bg-color);
+  transition: var(--transition);
+}
+
+.timeline-item .dot.completed {
+  background: var(--success);
+  box-shadow: 0 0 10px var(--success);
+}
+
+.timeline-item .content {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  flex: 1;
+}
+
+.timeline-item .title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-item .tag {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .planner-layout { grid-template-columns: 1fr; }
 }
 
 /* Scrollbar */

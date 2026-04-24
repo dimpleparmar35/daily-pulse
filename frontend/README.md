@@ -6,12 +6,12 @@ A premium, glassmorphism-inspired daily planner and progress tracking system. Bu
 
 ## ✨ Features
 
-- **Intuitive Planning**: Add tasks with priority levels (Low, Medium, High).
-- **Glassmorphism UI**: A stunning, modern interface with backdrop blurs and neon accents.
-- **Data Visualization**:
-  - **Daily Completion**: Real-time doughnut chart of your today's progress.
-  - **Monthly Trends**: Line chart tracking your productivity over the last 30 days.
-- **Persistent Storage**: All your data is saved locally in your browser—no login required.
+- **Timeline Visualization**: A vertical timeline of your day (Structured-inspired).
+- **Node.js Backend**: A secure, persistent API to store all your data.
+- **SQLite Database**: Lightweight and portable data storage.
+- **Pulse Analytics**: Market-unique productivity heatmaps and radial scores.
+- **Daily Diary**: Integrated journaling for deep focus.
+- **Task Reminders**: Browser notifications for scheduled tasks.
 - **Responsive Design**: Works perfectly on desktop, tablets, and smartphones.
 - **Streak Tracking**: Stay motivated by maintaining your daily activity streak.
 

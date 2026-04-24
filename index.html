@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <meta name="description" content="A premium daily planner and progress tracker to boost your productivity with data-driven insights.">
-    <script type="module" crossorigin src="./assets/index-Dg1hLlRc.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BPNMwF6i.css">
+    <script type="module" crossorigin src="./assets/index-CoHc0ZEW.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-nVt-978S.css">
   </head>
   <body>
     <div id="app">
@@ -25,7 +25,8 @@
       <main class="dashboard">
         <section class="view-toggle">
           <button id="show-planner" class="toggle-btn active">Planner</button>
-          <button id="show-diary" class="toggle-btn">Daily Diary</button>
+          <button id="show-diary" class="toggle-btn">Diary</button>
+          <button id="show-analytics" class="toggle-btn">Pulse Analytics</button>
         </section>
 
         <section id="planner-view" class="view-content">
@@ -76,6 +77,55 @@
             <div class="diary-actions">
               <span id="save-status"></span>
               <button id="save-diary-btn" class="btn-primary">Save Entry</button>
+            </div>
+          </div>
+        <section id="analytics-view" class="view-content hidden">
+          <div class="stats-grid-wide">
+            <div class="stat-card glass full-width">
+              <div class="card-header">
+                <h3>Productivity Heatmap</h3>
+                <p>Your activity over the last year</p>
+              </div>
+              <div id="heatmap-container" class="heatmap"></div>
+            </div>
+
+            <div class="stat-card glass">
+              <h3>Life Pulse Score</h3>
+              <div class="chart-container">
+                <canvas id="pulseChart"></canvas>
+              </div>
+              <div class="pulse-metrics">
+                <div class="metric">
+                  <span class="label">Completion</span>
+                  <span class="value" id="pulse-completion">0%</span>
+                </div>
+                <div class="metric">
+                  <span class="label">Consistency</span>
+                  <span class="value" id="pulse-consistency">0%</span>
+                </div>
+                <div class="metric">
+                  <span class="label">Reflections</span>
+                  <span class="value" id="pulse-reflections">0%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card glass">
+              <h3>Monthly Summary</h3>
+              <div class="monthly-stats">
+                <div class="big-stat">
+                  <span id="monthly-total-tasks">0</span>
+                  <p>Tasks Finished</p>
+                </div>
+                <div class="big-stat">
+                  <span id="monthly-avg-rate">0%</span>
+                  <p>Avg. Success Rate</p>
+                </div>
+                <div class="big-stat">
+                  <span id="monthly-best-streak">0</span>
+                  <p>Best Streak</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>

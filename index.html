@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Pulse | Plan, Track, Evolve</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="A premium daily planner and progress tracker to boost your productivity with data-driven insights.">
+  </head>
+  <body>
+    <div id="app">
+      <nav class="glass-nav">
+        <div class="logo">
+          <span class="pulse-icon"></span>
+          <h1>Daily Pulse</h1>
+        </div>
+        <div class="nav-date" id="current-date">-- ---, 202X</div>
+      </nav>
+
+      <main class="dashboard">
+        <section class="stats-grid">
+          <div class="stat-card glass">
+            <h3>Daily Completion</h3>
+            <div class="chart-container">
+              <canvas id="dailyChart"></canvas>
+            </div>
+            <p id="daily-status">No tasks yet</p>
+          </div>
+          
+          <div class="stat-card glass">
+            <h3>Monthly Trend</h3>
+            <div class="chart-container">
+              <canvas id="monthlyChart"></canvas>
+            </div>
+          </div>
+
+          <div class="stat-card glass streak-card">
+            <h3>Current Streak</h3>
+            <div class="streak-value" id="streak-count">0</div>
+            <p>Days active</p>
+          </div>
+        </section>
+
+        <section class="planner-section">
+          <div class="planner-header">
+            <h2>Today's Plan</h2>
+            <button id="add-task-btn" class="btn-primary">
+              <i data-lucide="plus"></i> New Task
+            </button>
+          </div>
+
+          <div id="task-list" class="task-list">
+            <!-- Tasks will be injected here -->
+          </div>
+        </section>
+      </main>
+
+      <!-- Task Modal -->
+      <div id="task-modal" class="modal glass-blur hidden">
+        <div class="modal-content glass">
+          <h2>Create New Task</h2>
+          <form id="task-form">
+            <div class="form-group">
+              <label for="task-title">Task Title</label>
+              <input type="text" id="task-title" placeholder="What needs to be done?" required>
+            </div>
+            <div class="form-group">
+              <label for="task-priority">Priority</label>
+              <select id="task-priority">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="button" id="cancel-task" class="btn-secondary">Cancel</button>
+              <button type="submit" class="btn-primary">Save Task</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

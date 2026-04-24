@@ -1,20 +1,24 @@
 import './style.css';
 import Chart from 'chart.js/auto';
-import { createIcons, Plus, Trash2, Check, X } from 'lucide';
+import { createIcons, Plus, Trash2, Check, X, Clock } from 'lucide';
 
 // --- State Management ---
 let state = {
   tasks: JSON.parse(localStorage.getItem('tasks')) || [],
-  history: JSON.parse(localStorage.getItem('history')) || {}, // { 'YYYY-MM-DD': completionRate }
+  history: JSON.parse(localStorage.getItem('history')) || {},
+  diary: JSON.parse(localStorage.getItem('diary')) || {}, // { 'YYYY-MM-DD': 'entry content' }
   streak: parseInt(localStorage.getItem('streak')) || 0,
-  lastActive: localStorage.getItem('lastActive') || null
+  lastActive: localStorage.getItem('lastActive') || null,
+  remindersEnabled: localStorage.getItem('remindersEnabled') === 'true'
 };
 
 const saveState = () => {
   localStorage.setItem('tasks', JSON.stringify(state.tasks));
   localStorage.setItem('history', JSON.stringify(state.history));
+  localStorage.setItem('diary', JSON.stringify(state.diary));
   localStorage.setItem('streak', state.streak.toString());
   localStorage.setItem('lastActive', state.lastActive);
+  localStorage.setItem('remindersEnabled', state.remindersEnabled.toString());
 };
 
 // --- Utilities ---
@@ -22,22 +26,206 @@ const getTodayKey = () => new Date().toISOString().split('T')[0];
 
 const updateDateDisplay = () => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', options);
+  const dateStr = new Date().toLocaleDateString('en-US', options);
+  document.getElementById('current-date').textContent = dateStr;
+  document.getElementById('diary-date').textContent = dateStr;
 };
 
-// --- Task Logic ---
-const addTask = (title, priority) => {
+// --- Task & Reminder Logic ---
+const requestNotificationPermission = async () => {
+  if ('Notification' in window) {
+    const permission = await Notification.requestPermission();
+    state.remindersEnabled = (permission === 'granted');
+    saveState();
+  }
+};
+
+const addTask = (title, priority, time) => {
   const newTask = {
     id: Date.now(),
     title,
     priority,
+    time, // e.g., "14:30"
     completed: false,
-    date: getTodayKey()
+    date: getTodayKey(),
+    notified: false
   };
   state.tasks.push(newTask);
   renderTasks();
   updateCharts();
   saveState();
+  
+  if (time && !state.remindersEnabled) {
+    requestNotificationPermission();
+  }
+};
+
+const checkReminders = () => {
+  if (!state.remindersEnabled) return;
+  
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
+  state.tasks.forEach(task => {
+    if (task.time === currentTime && !task.notified && !task.completed) {
+      new Notification('Daily Pulse Reminder', {
+        body: `Time for: ${task.title}`,
+        icon: '/vite.svg'
+      });
+      task.notified = true;
+      saveState();
+    }
+  });
+};
+
+setInterval(checkReminders, 10000); // Check every 10 seconds
+
+// --- Diary Logic ---
+const loadDiaryEntry = () => {
+  const today = getTodayKey();
+  document.getElementById('diary-input').value = state.diary[today] || '';
+};
+
+const saveDiaryEntry = () => {
+  const today = getTodayKey();
+  const content = document.getElementById('diary-input').value;
+  state.diary[today] = content;
+  saveState();
+
+  const status = document.getElementById('save-status');
+  status.textContent = 'Entry Saved!';
+  status.classList.add('visible');
+  setTimeout(() => status.classList.remove('visible'), 2000);
+};
+
+// --- View Toggling ---
+const switchView = (view) => {
+  const plannerView = document.getElementById('planner-view');
+  const diaryView = document.getElementById('diary-view');
+  const analyticsView = document.getElementById('analytics-view');
+  
+  const plannerBtn = document.getElementById('show-planner');
+  const diaryBtn = document.getElementById('show-diary');
+  const analyticsBtn = document.getElementById('show-analytics');
+
+  [plannerView, diaryView, analyticsView].forEach(v => v.classList.add('hidden'));
+  [plannerBtn, diaryBtn, analyticsBtn].forEach(b => b.classList.remove('active'));
+
+  if (view === 'planner') {
+    plannerView.classList.remove('hidden');
+    plannerBtn.classList.add('active');
+  } else if (view === 'diary') {
+    diaryView.classList.remove('hidden');
+    diaryBtn.classList.add('active');
+    loadDiaryEntry();
+  } else {
+    analyticsView.classList.remove('hidden');
+    analyticsBtn.classList.add('active');
+    renderHeatmap();
+    updatePulseAnalytics();
+  }
+};
+
+// --- Unique Features: Heatmap & Pulse Analytics ---
+const renderHeatmap = () => {
+  const container = document.getElementById('heatmap-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const today = new Date();
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const rate = state.history[key] || 0;
+    
+    const cell = document.createElement('div');
+    cell.className = 'heatmap-cell';
+    if (rate > 0) {
+      const level = Math.ceil(rate / 25);
+      cell.classList.add(`cell-level-${level}`);
+    }
+    cell.title = `${key}: ${rate}% completed`;
+    container.appendChild(cell);
+  }
+};
+
+let pulseChart;
+const initPulseChart = () => {
+  const canvas = document.getElementById('pulseChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  pulseChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Completion', 'Consistency', 'Reflection', 'Streak', 'Priority'],
+      datasets: [{
+        label: 'Your Pulse',
+        data: [0, 0, 0, 0, 0],
+        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+        borderColor: '#6366f1',
+        pointBackgroundColor: '#6366f1',
+        pointBorderColor: '#fff',
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: 'rgba(255, 255, 255, 0.1)' },
+          angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+          pointLabels: { color: '#94a3b8' },
+          ticks: { display: false }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+};
+
+const updatePulseAnalytics = () => {
+  const historyValues = Object.values(state.history);
+  const diaryValues = Object.values(state.diary);
+  
+  const avgCompletion = historyValues.length ? Math.round(historyValues.reduce((a, b) => a + b, 0) / historyValues.length) : 0;
+  
+  let activeDays = 0;
+  for(let i=0; i<30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    if(state.history[d.toISOString().split('T')[0]]) activeDays++;
+  }
+  const consistency = Math.round((activeDays / 30) * 100);
+  const reflectionScore = Math.min(100, Math.round((diaryValues.length / (historyValues.length || 1)) * 100));
+
+  const compEl = document.getElementById('pulse-completion');
+  const consEl = document.getElementById('pulse-consistency');
+  const reflEl = document.getElementById('pulse-reflections');
+  
+  if (compEl) compEl.textContent = `${avgCompletion}%`;
+  if (consEl) consEl.textContent = `${consistency}%`;
+  if (reflEl) reflEl.textContent = `${reflectionScore}%`;
+
+  if (pulseChart) {
+    pulseChart.data.datasets[0].data = [
+      avgCompletion,
+      consistency,
+      reflectionScore,
+      Math.min(100, state.streak * 10),
+      75
+    ];
+    pulseChart.update();
+  }
+
+  const last30DaysTasks = state.tasks.filter(t => t.completed).length; 
+  const totalTasksEl = document.getElementById('monthly-total-tasks');
+  const avgRateEl = document.getElementById('monthly-avg-rate');
+  const bestStreakEl = document.getElementById('monthly-best-streak');
+
+  if (totalTasksEl) totalTasksEl.textContent = last30DaysTasks;
+  if (avgRateEl) avgRateEl.textContent = `${consistency}%`;
+  if (bestStreakEl) bestStreakEl.textContent = state.streak;
 };
 
 const toggleTask = (id) => {
@@ -75,7 +263,10 @@ const renderTasks = () => {
       </div>
       <div class="task-content">
         <div class="task-title">${task.title}</div>
-        <span class="task-priority-tag priority-${task.priority}">${task.priority}</span>
+        <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem;">
+          <span class="task-priority-tag priority-${task.priority}">${task.priority}</span>
+          ${task.time ? `<span style="color: var(--text-secondary); font-size: 0.8rem;"><i data-lucide="clock" style="width: 12px; height: 12px; margin-right: 4px;"></i>${task.time}</span>` : ''}
+        </div>
       </div>
       <div class="task-actions">
         <button class="action-btn delete" onclick="window.deleteTask(${task.id})">
@@ -149,11 +340,9 @@ const updateCharts = () => {
 
   document.getElementById('daily-status').textContent = total === 0 ? 'No tasks yet' : `${rate}% Completed`;
 
-  // Save progress for history
   const today = getTodayKey();
   state.history[today] = rate;
   
-  // Update Monthly Chart (Last 7 days for demo)
   const last7Days = [];
   const labels = [];
   for(let i = 6; i >= 0; i--) {
@@ -168,26 +357,15 @@ const updateCharts = () => {
   monthlyChart.data.datasets[0].data = last7Days;
   monthlyChart.update();
 
-  // Streak logic
   updateStreak();
 };
 
 const updateStreak = () => {
   const today = getTodayKey();
   if (state.lastActive !== today) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = yesterday.toISOString().split('T')[0];
-
-    if (state.lastActive === yesterdayKey) {
-      // Continued streak (dummy logic for demo - in reality would check if tasks were done)
-    } else if (state.lastActive !== null) {
-      // state.streak = 0; // Reset streak if missed a day
-    }
     state.lastActive = today;
   }
   
-  // For demo: if they have tasks and at least one is completed, let's say they are active
   if (state.tasks.some(t => t.completed) && state.streak === 0) {
     state.streak = 1;
   }
@@ -208,12 +386,18 @@ document.getElementById('task-form').onsubmit = (e) => {
   e.preventDefault();
   const title = document.getElementById('task-title').value;
   const priority = document.getElementById('task-priority').value;
-  addTask(title, priority);
+  const time = document.getElementById('task-time').value;
+  addTask(title, priority, time);
   e.target.reset();
   document.getElementById('task-modal').classList.add('hidden');
 };
 
-// --- Global Actions for Inline HTML calls ---
+document.getElementById('show-planner').onclick = () => switchView('planner');
+document.getElementById('show-diary').onclick = () => switchView('diary');
+document.getElementById('show-analytics').onclick = () => switchView('analytics');
+document.getElementById('save-diary-btn').onclick = saveDiaryEntry;
+
+// --- Global Actions ---
 window.toggleTask = toggleTask;
 window.deleteTask = deleteTask;
 
@@ -221,7 +405,8 @@ window.deleteTask = deleteTask;
 document.addEventListener('DOMContentLoaded', () => {
   updateDateDisplay();
   initCharts();
+  initPulseChart();
   renderTasks();
   updateCharts();
-  createIcons({ icons: { Plus, Trash2, Check, X } });
+  createIcons();
 });
